@@ -1,0 +1,4 @@
+module CTypes where
+
+cInt :: String
+cInt = "int"

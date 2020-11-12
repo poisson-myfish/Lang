@@ -1,0 +1,10 @@
+module Types where
+
+data DataType = TypeInt | TypeString
+    deriving (Show, Eq)
+
+getDataType :: String -> DataType
+getDataType intStr = TypeInt
+
+intStr :: String
+intStr = "Int"
