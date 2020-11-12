@@ -9,17 +9,13 @@ generateFunDecl (ExprFunDecl n dt) = (cType dt) ++ " " ++ n
   ++ "(" ++ ")"  -- TODO: Add parameters
 
 generateStart :: String
-generateStart = "{"
+generateStart = " {\n"
 
 generateEnd :: String
-generateEnd = "}"
+generateEnd = "\n}\n"
 
 generateRet :: Expression -> String
-generateRet (ExprRet v dt) =
-  case dt of
-    TypeInt -> "return " ++ v
-    TypeString -> "return \"" ++ v ++ "\"" -- Adding the quotes for the string
-    TypeUnknown -> "return " ++ v
+generateRet (ExprRet v dt) = "return " ++ (cValue v dt)
 
 generateSemicolon :: String
 generateSemicolon = ";"
