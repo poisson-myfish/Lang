@@ -6,7 +6,7 @@ data Expression = ExprFunDecl String DataType  -- name, data type
                 | ExprFunCall String           -- name
                 | ExprStart
                 | ExprEnd
-                | ExprRet String  -- value
+                | ExprRet String DataType  -- value, type
                 | ExprNone
                 | ExprSemicolon
                 deriving (Show, Eq)
@@ -20,9 +20,9 @@ parseFunDecl ts =
 
 parseRet :: [Token] -> (Expression, [Token])
 parseRet [] = (ExprNone, [])
-parseRet (TokenId name : ts') = (ExprRet name, ts')
-parseRet (TokenNumber num : ts') = (ExprRet (show num), ts')
-parseRet (TokenString str : ts') = (ExprRet ("\"" ++ str ++ "\""), ts')
+parseRet (TokenId name : ts') = (ExprRet name TypeUnknown, ts')
+parseRet (TokenNumber num : ts') = (ExprRet (show num) TypeInt, ts')
+parseRet (TokenString str : ts') = (ExprRet str TypeString, ts')
 
 parse :: [Token] -> [Expression]
 parse [] = []

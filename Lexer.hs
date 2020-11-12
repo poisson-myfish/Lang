@@ -65,7 +65,8 @@ tokenize (c : cs)
     num = collectNumber [c] cs
     id = collectId [c] cs
     comment = collectComment [c] cs
-    str = collectString [(cs !! 0)] (drop 1 cs)
+    -- str = collectString [(cs !! 0)] (drop 1 cs)
+    str = collectString "" cs
     colon = collectColon [c] cs
 
 

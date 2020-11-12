@@ -1,6 +1,7 @@
 module CGen where
 import CTypes
 import Parser
+import Types
 
 
 generateFunDecl :: Expression -> String
@@ -14,12 +15,16 @@ generateEnd :: String
 generateEnd = "}"
 
 generateRet :: Expression -> String
-generateRet (ExprRet v) = "return " ++ v
+generateRet (ExprRet v dt) =
+  case dt of
+    TypeInt -> "return " ++ v
+    TypeString -> "return \"" ++ v ++ "\"" -- Adding the quotes for the string
+    TypeUnknown -> "return " ++ v
 
 generateSemicolon :: String
 generateSemicolon = ";"
 
-generate :: [Expression] -> String
+generate :: [Expression] -> String 
 generate [] = []
 generate (e : es) =
   case e of
@@ -27,5 +32,5 @@ generate (e : es) =
     ExprStart -> generateStart ++ (generate es)
     ExprEnd -> generateEnd ++ (generate es)
     ExprSemicolon -> generateSemicolon ++ (generate es)
-    (ExprRet _) -> (generateRet e) ++ (generate es)
+    (ExprRet _ _) -> (generateRet e) ++ (generate es)
     _ -> generate es

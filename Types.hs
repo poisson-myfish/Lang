@@ -3,6 +3,7 @@ module Types where
 data DataType = TypeInt
               | TypeString
               | TypeCustom String
+              | TypeUnknown
     deriving (Show, Eq)
 
 getDataType :: String -> DataType
