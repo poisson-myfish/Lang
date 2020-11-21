@@ -82,7 +82,6 @@ stringToNumberT s = TokenNumber $ read s
 stringToIdT :: String -> Token
 stringToIdT "fun" = TokenFun
 stringToIdT "return" = TokenRet
-stringToIdT "Nothing" = TokenNothing
 stringToIdT s = TokenId s
 
 stringToStringT :: String -> Token

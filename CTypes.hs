@@ -5,6 +5,7 @@ cType :: DataType -> String
 cType TypeInt = cInt
 cType TypeString = cStr
 cType (TypeCustom str) = str
+cType TypeNothing = cNothing
 
 cValue :: String -> DataType -> String
 cValue s dt =
@@ -18,3 +19,6 @@ cInt = "int"
 
 cStr :: String
 cStr = "char*"
+
+cNothing :: String
+cNothing = "void"

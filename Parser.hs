@@ -3,8 +3,8 @@ import Types
 import Lexer
 
 data Expression = ExprFunDecl String DataType [Expression]  -- name, data type, arguments
-                | ExprFunCall String           -- name
-                | ExprVarTypeDecl String DataType  -- name, data type
+                | ExprFunCall String [Expression]           -- name, arguments
+                | ExprVarType String DataType  -- name, data type
                 | ExprStart
                 | ExprEnd
                 | ExprRet String DataType  -- value, type
@@ -16,25 +16,42 @@ data Expression = ExprFunDecl String DataType [Expression]  -- name, data type, 
 
 parseVarTypeDecl :: [Token] -> (Expression, [Token])
 parseVarTypeDecl [] = (ExprNone, [])
-parseVarTypeDecl (TokenNothing : ts) = (ExprNothing, ts)
+parseVarTypeDecl (TokenId "Nothing" : ts) = (ExprNothing, ts)
 parseVarTypeDecl ts =
   let (TokenId name : TokenColon : TokenId dtype : ts') = ts
   in
-    (ExprVarTypeDecl name (getDataType dtype), ts')
+    (ExprVarType name (getDataType dtype), ts')
 
-parseFunArgs :: [Token] -> ([Expression], [Token])
-parseFunArgs (TokenParenRight : ts) = ([], ts)
-parseFunArgs (TokenComma : ts) = (e : es, ts'')
+parseFunParams :: [Token] -> ([Expression], [Token])
+parseFunParams (TokenParenRight : ts) = ([], ts)
+parseFunParams (TokenComma : ts) = (e : es, ts'')
   where
     (e, ts') = parseVarTypeDecl ts
-    (es, ts'') = parseFunArgs ts'
+    (es, ts'') = parseFunParams ts'
+
+parseFunArgs :: [Token] -> ([Expression], [Token])
+parseFunArgs (TokenComma : TokenId t : ts) = ((ExprVarType t TypeUnknown) : es, ts')
+  where
+    (es, ts') = parseFunArgs ts
+parseFunArgs (TokenComma : TokenString t : ts) = ((ExprVarType t TypeString) : es, ts')
+  where
+    (es, ts') = parseFunArgs ts
+parseFunArgs (TokenComma : TokenNumber t : ts) = ((ExprVarType (show t) TypeInt) : es, ts')
+  where
+    (es, ts') = parseFunArgs ts
+parseFunArgs ts = ([], tail ts)
 
 parseFunDecl :: [Token] -> (Expression, [Token])
 parseFunDecl ts =
   let ((TokenId name) : TokenDoubleColon : (TokenId dtype) : TokenParenLeft : ts') = ts
-      (args, ts'') = parseFunArgs (TokenComma : ts')  -- Prepending comma because of impl of parseFunArgs
+      (args, ts'') = parseFunParams (TokenComma : ts')  -- Prepending comma because of impl of parseFunArgs
   in
     (ExprFunDecl name (getDataType dtype) args, ts'')
+
+parseFunCall :: String -> [Token] -> (Expression, [Token])
+parseFunCall name ts = (ExprFunCall name es, ts')
+  where
+    (es, ts') = parseFunArgs (TokenComma : ts)
 
 parseRet :: [Token] -> (Expression, [Token])
 parseRet [] = (ExprNone, [])
@@ -44,14 +61,18 @@ parseRet (TokenString str : ts') = (ExprRet str TypeString, ts')
 
 parseId :: [Token] -> (Expression, [Token])
 parseId [] = (ExprNone, [])
+parseId (TokenId id : TokenParenLeft : ts) = (e, ts')
+  where
+    (e, ts') = parseFunCall id ts
 
 parse :: [Token] -> [Expression]
 parse [] = []
 parse (t : ts) =
   case t of
-    TokenFun -> (fst fd) : parse (snd fd)  where fd = parseFunDecl ts
+    TokenFun -> es : parse ts'  where (es, ts') = parseFunDecl ts
     TokenCurlyLeft -> ExprStart : parse ts
     TokenCurlyRight -> ExprEnd : parse ts
-    TokenRet -> (fst ret) : parse (snd ret)  where ret = parseRet ts
+    TokenRet -> es : parse ts'  where (es, ts') = parseRet ts
     TokenSemicolon -> ExprSemicolon : parse ts
+    (TokenId _) -> es : parse ts'  where (es, ts') = parseId (t : ts)
     _ -> parse ts

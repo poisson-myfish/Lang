@@ -1,4 +1,9 @@
+fun hello :: Nothing (x: String, y: Int)
+{
+}
+
 fun main :: Int (Nothing)
 {
+    hello("welcome", 0);
     return 0;
 }

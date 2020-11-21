@@ -3,15 +3,22 @@ import CTypes
 import Parser
 import Types
 
+generateFunParams :: [Expression] -> String
+generateFunParams (ExprNothing : es) = "void "
+generateFunParams (ExprVarType name dtype : es) = (cType dtype) ++ " " ++ name ++ "," ++
+  generateFunParams es
+generateFunParams _ = ""
+
 generateFunArgs :: [Expression] -> String
-generateFunArgs (ExprNothing : es) = "void "
-generateFunArgs (ExprVarTypeDecl name dtype : es) = (cType dtype) ++ " " ++ name ++ "," ++
-  generateFunArgs es
+generateFunArgs (ExprVarType name dtype : es) = (cValue name dtype) ++ "," ++ generateFunArgs es
 generateFunArgs _ = ""
 
 generateFunDecl :: Expression -> String
 generateFunDecl (ExprFunDecl n dt args) = (cType dt) ++ " " ++ n
-  ++ "(" ++ (init $ generateFunArgs args) ++ ")"
+  ++ "(" ++ (init $ generateFunParams args) ++ ")"
+
+generateFunCall :: Expression -> String
+generateFunCall (ExprFunCall name args) = name ++ "(" ++ (init $ generateFunArgs args) ++ ")"
 
 generateStart :: String
 generateStart = " {\n"
@@ -23,7 +30,7 @@ generateRet :: Expression -> String
 generateRet (ExprRet v dt) = "return " ++ (cValue v dt)
 
 generateSemicolon :: String
-generateSemicolon = ";"
+generateSemicolon = ";\n"
 
 generate :: [Expression] -> String 
 generate [] = []
@@ -33,5 +40,6 @@ generate (e : es) =
     ExprStart -> generateStart ++ (generate es)
     ExprEnd -> generateEnd ++ (generate es)
     ExprSemicolon -> generateSemicolon ++ (generate es)
+    (ExprFunCall _ _) -> generateFunCall e ++ (generate es)
     (ExprRet _ _) -> (generateRet e) ++ (generate es)
     _ -> generate es
