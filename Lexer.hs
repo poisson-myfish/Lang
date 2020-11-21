@@ -17,7 +17,10 @@ data Token = TokenNumber Int
            | TokenCurlyRight
            | TokenSemicolon
            | TokenComma
+           | TokenSquareLeft
+           | TokenSquareRight
            | TokenRet
+           | TokenNothing
   deriving (Show, Eq)
 
 
@@ -79,6 +82,7 @@ stringToNumberT s = TokenNumber $ read s
 stringToIdT :: String -> Token
 stringToIdT "fun" = TokenFun
 stringToIdT "return" = TokenRet
+stringToIdT "Nothing" = TokenNothing
 stringToIdT s = TokenId s
 
 stringToStringT :: String -> Token

@@ -2,27 +2,48 @@ module Parser where
 import Types
 import Lexer
 
-data Expression = ExprFunDecl String DataType  -- name, data type
+data Expression = ExprFunDecl String DataType [Expression]  -- name, data type, arguments
                 | ExprFunCall String           -- name
+                | ExprVarTypeDecl String DataType  -- name, data type
                 | ExprStart
                 | ExprEnd
                 | ExprRet String DataType  -- value, type
                 | ExprNone
                 | ExprSemicolon
+                | ExprNothing
                 deriving (Show, Eq)
 
 
+parseVarTypeDecl :: [Token] -> (Expression, [Token])
+parseVarTypeDecl [] = (ExprNone, [])
+parseVarTypeDecl (TokenNothing : ts) = (ExprNothing, ts)
+parseVarTypeDecl ts =
+  let (TokenId name : TokenColon : TokenId dtype : ts') = ts
+  in
+    (ExprVarTypeDecl name (getDataType dtype), ts')
+
+parseFunArgs :: [Token] -> ([Expression], [Token])
+parseFunArgs (TokenParenRight : ts) = ([], ts)
+parseFunArgs (TokenComma : ts) = (e : es, ts'')
+  where
+    (e, ts') = parseVarTypeDecl ts
+    (es, ts'') = parseFunArgs ts'
+
 parseFunDecl :: [Token] -> (Expression, [Token])
 parseFunDecl ts =
-  let ((TokenId name) : TokenDoubleColon : (TokenId dtype) : TokenParenLeft : TokenParenRight : ts') = ts
+  let ((TokenId name) : TokenDoubleColon : (TokenId dtype) : TokenParenLeft : ts') = ts
+      (args, ts'') = parseFunArgs (TokenComma : ts')  -- Prepending comma because of impl of parseFunArgs
   in
-    (ExprFunDecl name (getDataType dtype), ts')
+    (ExprFunDecl name (getDataType dtype) args, ts'')
 
 parseRet :: [Token] -> (Expression, [Token])
 parseRet [] = (ExprNone, [])
 parseRet (TokenId name : ts') = (ExprRet name TypeUnknown, ts')
 parseRet (TokenNumber num : ts') = (ExprRet (show num) TypeInt, ts')
 parseRet (TokenString str : ts') = (ExprRet str TypeString, ts')
+
+parseId :: [Token] -> (Expression, [Token])
+parseId [] = (ExprNone, [])
 
 parse :: [Token] -> [Expression]
 parse [] = []
