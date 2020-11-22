@@ -8,9 +8,6 @@ removeFunComma [] = ""
 removeFunComma [c] = ""
 removeFunComma x = init x
 
-gName :: String -> String
-gName s = "lang__" ++ s
-
 generateFunParams :: [Expression] -> String
 generateFunParams (ExprNothing : es) = "void "
 generateFunParams (ExprVarType name dtype : es) = (cType dtype) ++ " " ++ name ++ "," ++
@@ -22,17 +19,17 @@ generateFunArgs (ExprVarType name dtype : es) = (cValue name dtype) ++ "," ++ ge
 generateFunArgs _ = ""
 
 generateFunDecl :: Expression -> String
-generateFunDecl (ExprFunDecl n dt args) = (cType dt) ++ " " ++ (gName n)
+generateFunDecl (ExprFunDecl n dt args) = (cType dt) ++ " " ++ n
   ++ "(" ++ (removeFunComma $ generateFunParams args) ++ ")"
 
 generateFunCall :: Expression -> String
-generateFunCall (ExprFunCall name args) = (gName name) ++ "(" ++ (removeFunComma $ generateFunArgs args) ++ ")"
+generateFunCall (ExprFunCall name args) = name ++ "(" ++ (removeFunComma $ generateFunArgs args) ++ ")"
 
 generateVarDecl :: Expression -> String
 generateVarDecl (ExprVarDecl (ExprVarType name dt) (ExprFunCall val args)) =
-                 (cType dt) ++ " " ++ (gName name) ++ " = " ++ (generateFunCall (ExprFunCall val args))
+                 (cType dt) ++ " " ++ name ++ " = " ++ (generateFunCall (ExprFunCall val args))
 generateVarDecl (ExprVarDecl (ExprVarType name dtype) (ExprValue val vtype)) =
-                 (cType dtype) ++ " " ++ (gName name) ++ " = " ++ (cValue val vtype)
+                 (cType dtype) ++ " " ++ name ++ " = " ++ (cValue val vtype)
 
 generateStart :: String
 generateStart = " {\n"
