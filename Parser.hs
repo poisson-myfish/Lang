@@ -5,6 +5,8 @@ import Lexer
 data Expression = ExprFunDecl String DataType [Expression]  -- name, data type, arguments
                 | ExprFunCall String [Expression]           -- name, arguments
                 | ExprVarType String DataType  -- name, data type
+                | ExprVarDecl Expression Expression  -- variable name + type (ExprVarType), value
+                | ExprValue String DataType
                 | ExprStart
                 | ExprEnd
                 | ExprRet String DataType  -- value, type
@@ -65,6 +67,27 @@ parseId (TokenId id : TokenParenLeft : ts) = (e, ts')
   where
     (e, ts') = parseFunCall id ts
 
+parseVarDecl :: [Token] -> (Expression, [Token])
+parseVarDecl [] = (ExprNone, [])
+parseVarDecl (TokenId name : TokenColon : TokenId dtype : TokenEquals : TokenId val : TokenParenLeft : ts) =
+  let (vt, ts') = parseVarTypeDecl (TokenId name : TokenColon : TokenId dtype :
+                                                  TokenEquals : TokenId val : ts)
+  in
+    (ExprVarDecl vt fc, ts'')  where (fc, ts'') = parseFunCall val ts
+parseVarDecl (TokenId name : TokenColon : TokenId dtype : TokenEquals : TokenId val : ts) =
+  let (vt, ts') = parseVarTypeDecl (TokenId name : TokenColon : TokenId dtype :
+                                                      TokenEquals : TokenId val : ts)
+  in
+    (ExprVarDecl vt (ExprValue val TypeUnknown), ts)
+parseVarDecl ts =
+  let ((ExprVarType name dtype), ts') = parseVarTypeDecl ts
+  in
+    case dtype of
+      TypeInt -> (e, ts'')  where (TokenEquals : (TokenNumber v) : ts'') = ts'
+                                  e = ExprVarDecl (ExprVarType name dtype) (ExprValue (show v) TypeInt)
+      TypeString -> (e, ts'')  where (TokenEquals : (TokenString v) : ts'') = ts'
+                                     e = ExprVarDecl (ExprVarType name dtype) (ExprValue v TypeString)
+
 parse :: [Token] -> [Expression]
 parse [] = []
 parse (t : ts) =
@@ -75,4 +98,5 @@ parse (t : ts) =
     TokenRet -> es : parse ts'  where (es, ts') = parseRet ts
     TokenSemicolon -> ExprSemicolon : parse ts
     (TokenId _) -> es : parse ts'  where (es, ts') = parseId (t : ts)
+    TokenLet -> es : parse ts'  where (es, ts') = parseVarDecl (ts)
     _ -> parse ts

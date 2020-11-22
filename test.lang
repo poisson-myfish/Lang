@@ -2,8 +2,22 @@ fun hello :: Nothing (x: String, y: Int)
 {
 }
 
+fun myFun :: String (Nothing)
+{
+    return "hello";
+}
+
 fun main :: Int (Nothing)
 {
-    hello("welcome", 0);
-    return 0;
+    let intVar: Int = 32;
+    let stringVar: String = "hello";
+    let copy: Int = intVar;
+    let yep: String = myFun();
+    
+    hello(stringVar, intVar);
+    hello("henlo", 9);
+
+    myFun();
+
+    return 1;
 }

@@ -21,6 +21,8 @@ data Token = TokenNumber Int
            | TokenSquareRight
            | TokenRet
            | TokenNothing
+           | TokenLet
+           | TokenEquals
   deriving (Show, Eq)
 
 
@@ -63,12 +65,12 @@ tokenize (c : cs)
   | c == '}'  = TokenCurlyRight           : tokenize cs
   | c == ';'  = TokenSemicolon            : tokenize cs
   | c == ','  = TokenComma                : tokenize cs
+  | c == '='  = TokenEquals               : tokenize cs
   | otherwise = error "Cannot tokenize character"
   where
     num = collectNumber [c] cs
     id = collectId [c] cs
     comment = collectComment [c] cs
-    -- str = collectString [(cs !! 0)] (drop 1 cs)
     str = collectString "" cs
     colon = collectColon [c] cs
 
@@ -82,6 +84,7 @@ stringToNumberT s = TokenNumber $ read s
 stringToIdT :: String -> Token
 stringToIdT "fun" = TokenFun
 stringToIdT "return" = TokenRet
+stringToIdT "let" = TokenLet
 stringToIdT s = TokenId s
 
 stringToStringT :: String -> Token

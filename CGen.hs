@@ -3,6 +3,11 @@ import CTypes
 import Parser
 import Types
 
+removeFunComma :: String -> String
+removeFunComma [] = ""
+removeFunComma [c] = ""
+removeFunComma x = init x
+
 generateFunParams :: [Expression] -> String
 generateFunParams (ExprNothing : es) = "void "
 generateFunParams (ExprVarType name dtype : es) = (cType dtype) ++ " " ++ name ++ "," ++
@@ -15,16 +20,22 @@ generateFunArgs _ = ""
 
 generateFunDecl :: Expression -> String
 generateFunDecl (ExprFunDecl n dt args) = (cType dt) ++ " " ++ n
-  ++ "(" ++ (init $ generateFunParams args) ++ ")"
+  ++ "(" ++ (removeFunComma $ generateFunParams args) ++ ")"
 
 generateFunCall :: Expression -> String
-generateFunCall (ExprFunCall name args) = name ++ "(" ++ (init $ generateFunArgs args) ++ ")"
+generateFunCall (ExprFunCall name args) = name ++ "(" ++ (removeFunComma $ generateFunArgs args) ++ ")"
+
+generateVarDecl :: Expression -> String
+generateVarDecl (ExprVarDecl (ExprVarType name dt) (ExprFunCall val args)) =
+                 (cType dt) ++ " " ++ name ++ " = " ++ (generateFunCall (ExprFunCall val args))
+generateVarDecl (ExprVarDecl (ExprVarType name dtype) (ExprValue val vtype)) =
+                 (cType dtype) ++ " " ++ name ++ " = " ++ (cValue val vtype)
 
 generateStart :: String
 generateStart = " {\n"
 
 generateEnd :: String
-generateEnd = "\n}\n"
+generateEnd = "}\n\n"
 
 generateRet :: Expression -> String
 generateRet (ExprRet v dt) = "return " ++ (cValue v dt)
@@ -42,4 +53,5 @@ generate (e : es) =
     ExprSemicolon -> generateSemicolon ++ (generate es)
     (ExprFunCall _ _) -> generateFunCall e ++ (generate es)
     (ExprRet _ _) -> (generateRet e) ++ (generate es)
+    (ExprVarDecl _ _) -> (generateVarDecl e) ++ (generate es)
     _ -> generate es
